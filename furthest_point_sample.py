@@ -16,7 +16,8 @@ def fps(vertices, cluster_cnt, seed_cnt):
     # iteratively find furthest points
     while len(centroids) < cluster_cnt:
         centroids.append(furthest)
-        #print "Add {0}th sample point".format(len(centroids))
+        if len(centroids) % 100 == 0:
+            print "Add {0}th sample point".format(len(centroids))
         furthest = update_distance(distance, vertices, furthest)
 
     return np.array(centroids)

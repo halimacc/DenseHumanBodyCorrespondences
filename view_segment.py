@@ -32,26 +32,25 @@ def load_segment(model_idx, mesh_idx, segment_idx):
     # create gl list1
     gl_list = glGenLists(1)
     glNewList(gl_list, GL_COMPILE)
-    #glEnable(GL_TEXTURE_2D)
-    #glFrontFace(GL_CCW)
+    # glEnable(GL_TEXTURE_2D)
+    # glFrontFace(GL_CCW)
     for i in xrange(num_faces):
         face = vertices[faces[i]]
-        #color = cm.hot(float(segment[i]) / num_segment)
+        color = cm.hot(float(segment[i]) / num_segment)
         #color = cm.hot(float(i) / num_faces)
-        
-        color = cm.hot(random.choice([0.8, 0.5]))
+
+        #color = cm.hot(random.choice([0.8, 0.5]))
         glBegin(GL_TRIANGLES)
         for j in xrange(3):
             scale = 5
-            glVertex3f(face[j][0] * scale, face[j][1] * scale, face[j][2] * scale)
-            #glVertex3fv(list(face[j]))
             glColor4fv(color)
+            glVertex3f(face[j][0] * scale, face[j][1] * scale, face[j][2] * scale)
+            # glVertex3fv(list(face[j]))
+            
         glEnd()
-    #glDisable(GL_TEXTURE_2D)
+    # glDisable(GL_TEXTURE_2D)
     glEndList()
     return gl_list
-
-
 
 
 pygame.init()
@@ -123,7 +122,7 @@ while 1:
     glTranslate(tx / 20., ty / 20., - zpos)
     glRotate(ry, 1, 0, 0)
     glRotate(rx, 0, 1, 0)
-    #glCallList(obj.gl_list)
+    # glCallList(obj.gl_list)
     glCallList(model)
 
     pygame.display.flip()

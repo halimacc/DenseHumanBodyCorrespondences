@@ -7,7 +7,7 @@ mesh_dir = data_dir + 'mesh/'
 segment_dir = data_dir + 'segment/'
 
 num_model = 1
-num_segment = 2
+num_segment = 500
 
 
 def get_mesh_path(model_idx, mesh_idx):
