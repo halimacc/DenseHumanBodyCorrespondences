@@ -42,7 +42,7 @@ def load_segment(model_idx, mesh_idx, segment_idx):
         #color = cm.hot(random.choice([0.8, 0.5]))
         glBegin(GL_TRIANGLES)
         for j in xrange(3):
-            scale = 5
+            scale = 1
             glColor4fv(color)
             glVertex3f(face[j][0] * scale, face[j][1] * scale, face[j][2] * scale)
             # glVertex3fv(list(face[j]))
@@ -54,22 +54,15 @@ def load_segment(model_idx, mesh_idx, segment_idx):
 
 
 pygame.init()
-viewport = (800, 600)
+viewport = (512, 512)
 hx = viewport[0] / 2
 hy = viewport[1] / 2
 srf = pygame.display.set_mode(viewport, OPENGL | DOUBLEBUF)
 
-glLightfv(GL_LIGHT0, GL_POSITION,  (-40, 200, 100, 0.0))
-glLightfv(GL_LIGHT0, GL_AMBIENT, (0.2, 0.2, 0.2, 1.0))
-glLightfv(GL_LIGHT0, GL_DIFFUSE, (0.5, 0.5, 0.5, 1.0))
-glEnable(GL_LIGHT0)
-glEnable(GL_LIGHTING)
-glEnable(GL_COLOR_MATERIAL)
 glEnable(GL_DEPTH_TEST)
-glShadeModel(GL_SMOOTH)           # most obj files expect to be smooth-shaded
+# most obj files expect to be smooth-shaded
+glShadeModel(GL_SMOOTH)
 
-# LOAD OBJECT AFTER PYGAME INIT
-#obj = OBJ(sys.argv[1], swapyz=True)
 model = load_segment(0, 0, 0)
 
 clock = pygame.time.Clock()

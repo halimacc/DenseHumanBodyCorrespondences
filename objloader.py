@@ -83,28 +83,28 @@ class OBJ:
                         norms.append(0)
                 self.faces.append((face, norms, texcoords, material))
 
-        self.gl_list = glGenLists(1)
-        glNewList(self.gl_list, GL_COMPILE)
-        glEnable(GL_TEXTURE_2D)
-        glFrontFace(GL_CCW)
-        for face in self.faces:
-            vertices, normals, texture_coords, material = face
+        # self.gl_list = glGenLists(1)
+        # glNewList(self.gl_list, GL_COMPILE)
+        # glEnable(GL_TEXTURE_2D)
+        # glFrontFace(GL_CCW)
+        # for face in self.faces:
+        #     vertices, normals, texture_coords, material = face
 
-            # mtl = self.mtl[material]
-            # if 'texture_Kd' in mtl:
-            #     # use diffuse texmap
-            #     glBindTexture(GL_TEXTURE_2D, mtl['texture_Kd'])
-            # else:
-            #     # just use diffuse colour
-            #     glColor(*mtl['Kd'])
+        #     # mtl = self.mtl[material]
+        #     # if 'texture_Kd' in mtl:
+        #     #     # use diffuse texmap
+        #     #     glBindTexture(GL_TEXTURE_2D, mtl['texture_Kd'])
+        #     # else:
+        #     #     # just use diffuse colour
+        #     #     glColor(*mtl['Kd'])
 
-            glBegin(GL_POLYGON)
-            for i in range(len(vertices)):
-                if normals[i] > 0:
-                    glNormal3fv(self.normals[normals[i] - 1])
-                if texture_coords[i] > 0:
-                    glTexCoord2fv(self.texcoords[texture_coords[i] - 1])
-                glVertex3fv(self.vertices[vertices[i] - 1])
-            glEnd()
-        glDisable(GL_TEXTURE_2D)
-        glEndList()
+        #     glBegin(GL_POLYGON)
+        #     for i in range(len(vertices)):
+        #         if normals[i] > 0:
+        #             glNormal3fv(self.normals[normals[i] - 1])
+        #         if texture_coords[i] > 0:
+        #             glTexCoord2fv(self.texcoords[texture_coords[i] - 1])
+        #         glVertex3fv(self.vertices[vertices[i] - 1])
+        #     glEnd()
+        # glDisable(GL_TEXTURE_2D)
+        # glEndList()
