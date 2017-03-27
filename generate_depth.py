@@ -20,6 +20,17 @@ import cv2
 def get_gl_model(segment, vertices, faces):
     num_faces = faces.shape[0]
 
+    # recenter model
+    num_vertices = vertices.shape[0]
+    center = np.array([0, 0, 0], dtype=np.float32)
+    for i in xrange(num_vertices):
+        for j in xrange(3):
+            center[j] += vertices[i][j]
+    center /= float(num_vertices)
+    for i in xrange(num_vertices):
+        for j in xrange(3):
+            vertices[i][j] -= center[j]
+
     # create gl list1
     gl_list = glGenLists(1)
     glNewList(gl_list, GL_COMPILE)
@@ -43,14 +54,21 @@ def draw_model(model, r, theta, d):
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glLoadIdentity()
 
-    # base pose
-    glTranslate(0, -1, -2.5)
+    # model 0
+    glTranslate(0, 0, -2.5)
     glRotate(90, 0, 0, 1)
     glRotate(270, 1, 0, 0)
 
     glTranslate(0, 0, -d)
     glRotate(r, 1, 0, 0)
     glRotate(theta, 0, 0, 1)
+
+    # model 1
+    # glTranslate(0, 0, -2.5)
+    # glRotate(90, 0, 1, 0)
+    # glTranslate(0, 0, -d)
+    # glRotate(r, 0, 1, 0)
+    # glRotate(theta, 0, 0, 1)
 
     glCallList(model)
 
@@ -101,15 +119,16 @@ if __name__ == '__main__':
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, color_tex, 0)
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth_tex, 0)
 
-    for model_idx in xrange(num_model):
+    for model_idx in xrange(0, 1):
         print "Generate depth images and label for model {0}...".format(model_idx)
-        for segment_idx in xrange(100):
+        for segment_idx in xrange(69, 85):
             # load segment
             segment_path = get_segment_path(model_idx, segment_idx)
             segment = np.loadtxt(segment_path)
             print "Segment {0}...".format(segment_idx)
             for mesh_idx in xrange(num_mesh[model_idx]):
-                if segment_idx == 0 and mesh_idx < 49:
+
+                if segment_idx == 69 and mesh_idx < 34:
                     continue
 
                 print "Mesh {0}...".format(mesh_idx)
@@ -123,6 +142,7 @@ if __name__ == '__main__':
                 # get gl list
                 gl_model = get_gl_model(segment, vertices, faces)
 
+                exit
                 # draw model from different perspective
                 view_idx = -1
                 for d in [0, -0.2]:
