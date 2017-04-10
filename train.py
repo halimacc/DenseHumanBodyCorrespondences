@@ -1,27 +1,28 @@
 import tensorflow as tf
 import numpy as np
-from model import FCNDHBC
-from loss import loss
+from dhbc import DHBC_FCN
+from losses import softmax_cross_entropy
 import config
 import random
 import cv2 as cv
-import time
 import os
 import matplotlib.cm as cm
 
-start_step = 20
-snapshot_step = 5000
-snapshot_path = 'D:\\Project\\DHBC\\model\\{0}\\'
+project_path = 'D:\\Project\\DHBC\\'
+start_step = 0
 
-learning_rate = 0.001
+# train
+learning_rate = 0.0001
 training_iters = 200000
 batch_size = 1
 
-display_step = 1
-visualize_step = 1
-visualize_path = 'D:\\Project\\DHBC\\tmp\\{0}.png'
+# log and display
+logs_dir = project_path + 'log\\'
+checkpoints_dir = logs_dir + 'checkpoints\\'
+checkpoint_step = 1000
 
-logs_path = "D:\\Project\\DHBC\\model\\log1"
+display_dir = logs_dir + 'display\\'
+display_step = 10
 
 random.seed()
 
@@ -46,77 +47,82 @@ def random_batch(batch_size):
         color_img = cv.imread(color_path, -1)
         for i in range(512):
             for j in range(512):
-                idx = config.color2int(color_img[i, j])
+                idx = config.color2intArr[(color_img[i, j, 0], color_img[i, j, 1], color_img[i, j, 2])]
+                #idx = config.color2int(color_img[i, j])
                 if idx > 0:
                     batch_label_500[batch, i, j, idx - 1] = 1
         batch += 1
     return batch_depth, batch_label_500
 
-def visualize(step, prediction, label):
+
+def display(step, prediction, label):
+    prediction, label = prediction[0], label[0]
     mul = np.multiply(prediction, label)
+    labelimg = np.zeros([512, 512, 3], dtype=np.uint8)
+    predimg = np.zeros([512, 512, 3], dtype=np.uint8)
     heatmap = np.zeros([512, 512, 3], dtype=np.uint8)
+    correct = np.zeros([512, 512, 1], dtype=np.uint8)
     for i in range(512):
         for j in range(512):
             if np.sum(label[i, j]) > 0:
-                idx = np.argmax(label[i, j])
-                color = cm.hot(mul[i, j, idx])
+                idx_label = np.argmax(label[i, j])
+                idx_pred = np.argmax(prediction[i, j])
+                color = config.int2color(idx_label)
+                for c in range(3):
+                    labelimg[i, j, 2 - c] = 255 if color[c] == 1 else int(color[c] * 256)
+                color = config.int2color(idx_pred)
+                for c in range(3):
+                    predimg[i, j, 2 - c] = 255 if color[c] == 1 else int(color[c] * 256)
+                color = cm.hot(mul[i, j, idx_pred])
                 for c in range(3):
                     heatmap[i, j, 2 - c] = 255 if color[c] == 1 else int(color[c] * 256)
-    cv.imwrite(visualize_path.format(step), heatmap)
+                correct[i, j, 0] = 255 if idx_label == idx_pred else 0
+    display_path = display_dir + str(step).zfill(8)
+    cv.imwrite(display_path + '_groundtruth.png', labelimg)
+    cv.imwrite(display_path + '_prediction.png', predimg)
+    cv.imwrite(display_path + '_heatmap.png', heatmap)
+    cv.imwrite(display_path + '_correctness.png', correct)
 
 if __name__ == '__main__':
     
     with tf.device('/gpu:0'):
         tf.reset_default_graph()
         
-        depth = tf.placeholder(tf.float32, [None, 512, 512, 1])
-        
-        label_500 = tf.placeholder(tf.float32, [None, 512, 512, 500])
+        x_depth = tf.placeholder(tf.float32, [None, 512, 512, 1])
+        y_label_dense = tf.placeholder(tf.float32, [None, 512, 512, 500])
     
-        model = FCNDHBC()
-        model.build(depth)
+        model = DHBC_FCN()
+        model.build(x_depth)
     
-        cost = tf.reduce_mean(loss(logits=model.pred, labels=label_500, num_classes=500))
-        #cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=model.pred, labels=label_500 ))
+        cost = softmax_cross_entropy(logits=model.pred, labels=y_label_dense)
         optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
-    
-        # Initializing the variables
-        init = tf.global_variables_initializer()
         
-        tf.summary.scalar("training_loss", cost)
+        saver = tf.train.Saver(max_to_keep=10)
         
-        saver = tf.train.Saver()
-    
-        # Launch the graph
         with tf.Session() as sess:
-            sess.run(init)
+            print("Initialize variables...")
+            sess.run(tf.global_variables_initializer())
             
-            if os.path.exists(snapshot_path.format(start_step)):
-                saver.restore(sess, snapshot_path.format(start_step) + "snapshot.ckpt")
-                print("Load model at step {0}.".format(start_step))
+            ckpt_path = checkpoints_dir + 'model-' + str(start_step)
+            if os.path.exists(ckpt_path + '.meta'):
+                print("Restore model at step {0}...".format(start_step))
+                saver.restore(sess, ckpt_path)
                 step = start_step + 1
             else:
+                print("No snapshot at step {0}, training from scratch...".format(start_step))
                 step = 1
                 
-            summary_writer = tf.summary.FileWriter(logs_path, graph=tf.get_default_graph())
-            merged_summary_op = tf.summary.merge_all()
-                
-            # Keep training until reach max iterations
             while step * batch_size < training_iters:
-                batch_depth, batch_label_500 = random_batch(batch_size)
-                # Run optimization op (backprop)
-                _, loss, summary = sess.run([optimizer, cost, merged_summary_op], feed_dict={depth: batch_depth, label_500: batch_label_500})
-                summary_writer.add_summary(summary, step)
-                print("Iter " + str(step * batch_size) + ", Loss= {:.6f}".format(loss))
+                batch_depth, batch_label_dense = random_batch(batch_size)
+                _, loss= sess.run([optimizer, cost], feed_dict={x_depth: batch_depth, y_label_dense: batch_label_dense})
+                print("Step " + str(step * batch_size) + ", Loss= {:.6f}".format(loss))
                 
                 if step % display_step == 0:
-                    pred = sess.run(tf.nn.softmax(model.pred), feed_dict={depth: batch_depth, label_500: batch_label_500})
-                    visualize(step, pred[0], batch_label_500[0])
+                    pred = sess.run(tf.nn.softmax(model.pred), feed_dict={x_depth: batch_depth, y_label_dense: batch_label_dense})
+                    display(step, pred, batch_label_dense)
                     
-                if step % snapshot_step == 0:
-                    os.mkdir(snapshot_path.format(step))
-                    save_path = snapshot_path.format(step) + "snapshot.ckpt"
-                    saver.save(sess, save_path)
+                if step % checkpoint_step == 0:
+                    saver.save(sess, checkpoints_dir + 'model', step)
                     print("Save model at step {0}.".format(step))
                 step += 1
             print("Optimization Finished!")

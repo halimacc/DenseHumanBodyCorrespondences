@@ -105,6 +105,7 @@ def f2u(color):
     return (c[0], c[1], c[2])
 
     
+color2intArr = {(g, b, r): color2int((g, b, r)) for g in range(256) for b in range(256) for r in range(256)}
 
 #print(rgb2int)
 if __name__ == '__main__':
