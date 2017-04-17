@@ -4,15 +4,17 @@ from objloader import OBJ
 import numpy as np
 import os
 
-data_dir = 'D:/Project/DHBC/data/'
-mesh_dir = data_dir + 'mesh/'
-segment_dir = data_dir + 'segmentation/'
-view_dir = data_dir + 'view/'
+data_dir = 'D:\\Project\\DHBC\\data\\'
+mesh_dir = data_dir + 'mesh\\'
+segment_dir = data_dir + 'segmentation\\'
+view_dir = data_dir + 'view\\'
 
 num_model = 11
-num_seg = 100
+#num_seg = 100
+num_seg =  4
 num_patch = 500
-num_mesh = [72, 175, 150, 250, 250, 175, 175, 250, 250, 150, 175]
+num_mesh = [71, 175, 150, 250, 250, 175, 175, 250, 250, 150, 175]
+num_dense_color = 500
 
 
 def get_mesh_path(model_idx, mesh_idx):
@@ -40,31 +42,25 @@ def load_mesh(mesh_file):
 
     return None, None
 
-
-def int2color(idx):
-    idx = idx + 1
-    r = idx / 100 / 5.0
-    g = idx % 100 / 10 / 10.0
-    b = idx % 10 / 10.0
+rgbRange = int(256 * 256 * 256)
+def int2color(integer, max=rgbRange):
+    integer = integer * (rgbRange // max)
+    r = (integer // 256 // 256) / 255.0
+    g = (integer // 256 % 256) / 255.0
+    b = (integer % 256) / 255.0
     return (r, g, b)
 
-
-def color2int(color):
-    b, g, r = color[0], color[1], color[2]
-    idx0 = int(b / 256. * 10 + 0.5)
-    idx1 = int((g / 256. - b / 256. / 10) * 10 + 0.5)
-    #idx2 = int((r / 256. - g / 256. / 5) * 5 + 0.5)
-    idx2 = int((r + 1) / 256. * 5)
-    
-    return idx0 + 10 * idx1 + 100 * idx2
-
+def color2int(color, max=rgbRange):
+    r, g, b = color[0], color[1], color[2]
+    integer = 255 * 255 * r + 255 * g + b;
+    integer = integer // (rgbRange // max);
+    return integer
 
 znear = 1.0
 zfar = 3.55
 
 b = zfar * znear / (znear - zfar)
 a = - b / znear
-
 
 def z2depth(z):
     return b / (z - a)
@@ -73,25 +69,24 @@ def z2depth(z):
 def depth2gray(depth):
     return np.uint8(255 * (zfar - depth) / (zfar - znear))
 
-
-def get_view_path(model_idx, segment_idx, mesh_idx, view_idx):
-    return (os.path.join(view_dir,
-                         str(model_idx),
-                         str(segment_idx).zfill(3),
-                         str(mesh_idx).zfill(3),
-                         'view_{0}_color.png'.format(str(view_idx).zfill(3))),
-            os.path.join(view_dir,
-                         str(model_idx),
-                         str(segment_idx).zfill(3),
-                         str(mesh_idx).zfill(3),
-                         'view_{0}_depth.png'.format(str(view_idx).zfill(3))))
+def get_depth_view_path(model_idx, mesh_idx, view_idx):
+    return view_dir + "model_{0}\\mesh_{1}\\depth\\{2}.png".format(str(model_idx).zfill(2),
+                            str(mesh_idx).zfill(3),
+                            str(view_idx).zfill(3))
     
-def get_label_path(model_idx, segment_idx, mesh_idx, view_idx):
-    return os.path.join(view_dir,
-                         str(model_idx),
-                         str(segment_idx).zfill(3),
-                         str(mesh_idx).zfill(3),
-                         'view_{0}_label.npy'.format(str(view_idx).zfill(3)))
+def get_vertex_view_path(model_idx, mesh_idx, view_idx):
+    return view_dir + "model_{0}\\mesh_{1}\\vertex\\{2}.png".format(str(model_idx).zfill(2),
+                            str(mesh_idx).zfill(3),
+                            str(view_idx).zfill(3))
+
+def get_segmentation_view_path(model_idx, mesh_idx, segmentation_idx, view_idx):
+    return view_dir + "model_{0}\\mesh_{1}\\segmentation_{2}\\{3}.png".format(str(model_idx).zfill(2),
+                            str(mesh_idx).zfill(3),
+                            str(segmentation_idx).zfill(3),
+                            str(view_idx).zfill(3))
+    
+def get_pred_name(model_idx, segmentation_idx):
+    return 'pred_model_{0}_segmentation_{1}'.format(str(model_idx).zfill(2), str(segmentation_idx).zfill(3))
 
 def create_dir(path):
     dirname = os.path.dirname(path)
@@ -103,9 +98,6 @@ def f2u(color):
     for i in range(3):
         c.append(255 if color[i] == 1 else int(256 * color[i]))
     return (c[0], c[1], c[2])
-
-    
-color2intArr = {(g, b, r): color2int((g, b, r)) for g in range(256) for b in range(256) for r in range(256)}
 
 #print(rgb2int)
 if __name__ == '__main__':

@@ -157,19 +157,18 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include="FragmentShader.fs" />
+    <None Include="GeometryShader.gs" />
     <None Include="packages.config" />
     <None Include="VertexShader.vs" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="correspond.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="shader.cpp" />
-    <ClCompile Include="test.cpp" />
-    <ClCompile Include="utility.cpp" />
+    <ClCompile Include="generate_label.cpp" />
+    <ClCompile Include="tinyply.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="config.h" />
-    <ClInclude Include="shader.hpp" />
+    <ClInclude Include="shader.h" />
+    <ClInclude Include="tinyply.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

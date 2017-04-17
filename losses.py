@@ -5,7 +5,7 @@ to the loss. The loss function can be used in combination with any optimizer
 """
 import tensorflow as tf
 
-def softmax_cross_entropy(logits, labels):
+def softmax_cross_entropy(logits, labels, name='loss'):
     """Calculate the loss from the logits and the labels.
     Args:
       logits: tensor, float - [batch_size, width, height, num_classes].
@@ -15,7 +15,7 @@ def softmax_cross_entropy(logits, labels):
     Returns:
       loss: Loss tensor of type float.
     """
-    with tf.name_scope('loss'):
+    with tf.name_scope(name):
         epsilon = tf.constant(value=1e-4)
         softmax = tf.nn.softmax(logits) + epsilon
         cross_entropy = -tf.reduce_sum(labels * tf.log(softmax), reduction_indices=[-1])
@@ -23,4 +23,6 @@ def softmax_cross_entropy(logits, labels):
 
         tf.add_to_collection('losses', cross_entropy_mean)
         loss = tf.add_n(tf.get_collection('losses'), name='total_loss')
+
     return loss
+#    return cross_entropy_mean

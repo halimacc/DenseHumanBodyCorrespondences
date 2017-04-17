@@ -111,43 +111,4 @@ if __name__ == '__main__':
         model = DHBC_FCN()
         model.inference(x_depth, train=True)
         
-        t = timeit(t)
-        print("Set up cost and optimizer...")
-        
-        softmax_cross_entropy(model.pred, y_label_dense)
-        total_loss = tf.losses.get_total_loss()
-        optimizer = tf.train.AdamOptimizer().minimize(total_loss)
-        
-        saver = tf.train.Saver(max_to_keep=10)
-        
-        with tf.Session() as sess:
-            t = timeit(t)
-            print("Initialize variables...")
-            sess.run(tf.global_variables_initializer())
-            
-            ckpt_path = checkpoints_dir + 'model-' + str(start_step)
-            if os.path.exists(ckpt_path + '.meta'):
-                t = timeit(t)
-                print("Restore model at step {0}...".format(start_step))
-                saver.restore(sess, ckpt_path)
-                step = start_step + 1
-            else:
-                print("No snapshot at step {0}, training from scratch...".format(start_step))
-                step = 1
-                
-            t = timeit(t)
-            pred_name = config.get_pred_name(0, 0)
-            while step * batch_size < training_iters:
-                batch_depth, batch_label_dense = random_batch(batch_size)
-                _, loss= sess.run([optimizer, total_loss], feed_dict={x_depth: batch_depth, y_label_dense: batch_label_dense})
-                print("Step " + str(step * batch_size) + ", Loss= {:.6f}".format(loss))
-                
-                if step % display_step == 0:
-                    pred = sess.run(tf.nn.softmax(model.preds[0]), feed_dict={x_depth: batch_depth, y_label_dense: batch_label_dense})
-                    display(step, pred, batch_label_dense)
-                    
-                if step % checkpoint_step == 0:
-                    saver.save(sess, checkpoints_dir + 'model', step)
-                    print("Save model at step {0}.".format(step))
-                step += 1
-            print("Optimization Finished!")
+        print(slim.get_model_variables())

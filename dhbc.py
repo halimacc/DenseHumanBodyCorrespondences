@@ -1,8 +1,12 @@
 from math import ceil
 import numpy as np
 import tensorflow as tf
+import config
 
 class DHBC_FCN:
+    def __init__(self):
+        self.variable_scopes = ['conv1', 'conv2', 'conv3', 'conv4', 'conv5', 'fc6', 'fc7', 'deconv8', 'deconv9', 'deconv10', 'deconv11']
+    
     def build(self, depth, train=False):
         self.conv1 = self._conv_layer(depth, filter_shape=[11, 11, 1, 96], strides=[1, 4, 4, 1], name="conv1")
         self.pool1 = self._max_pool(self.conv1, kernel_size=[1, 3, 3, 1], strides=[1, 2, 2, 1], activation='lrn', name='pool1')
@@ -26,14 +30,21 @@ class DHBC_FCN:
             self.fc7 = tf.nn.dropout(self.fc7, 0.5)
 
         self.deconv8 = self._deconv_layer(self.fc7, filter_shape=[3, 3, 256, 4096], strides=[1, 2, 2, 1], name='deconv8')
+        #self.fuse8 = tf.add(self.deconv8, self.conv5)
 
         self.deconv9 = self._deconv_layer(self.deconv8, filter_shape=[3, 3, 256, 256], strides=[1, 2, 2, 1], name='deconv9')
+        #self.fuse9 = tf.add(self.deconv9, self.conv2)
 
         self.deconv10 = self._deconv_layer(self.deconv9, filter_shape=[3, 3, 96, 256], strides=[1, 2, 2, 1], name='deconv10')
+        #self.fuse10 = tf.add(self.deconv10, self.conv1)
 
         self.deconv11 = self._deconv_layer(self.deconv10, filter_shape=[5, 5, 16, 96], strides=[1, 4, 4, 1], name='deconv11')
         
-        self.pred = self._conv_layer(self.deconv11, filter_shape=[1, 1, 16, 500], strides=[1, 1, 1, 1], name='pred')
+        self.preds = {}
+        for model_idx in range(1):
+            for segmentation_idx in range(100):
+                pred_name = config.get_pred_name(model_idx, segmentation_idx)
+                self.preds[pred_name] = self._conv_layer(self.deconv11, filter_shape=[1, 1, 16, 500], strides=[1, 1, 1, 1], name=pred_name)
 
     def _max_pool(self, bottom, kernel_size, strides, activation, name):
         with tf.variable_scope(name):
@@ -73,19 +84,23 @@ class DHBC_FCN:
 
     def get_deconv_filter(self, f_shape):
         width = f_shape[0]
-        heigh = f_shape[0]
+        heigh = f_shape[1]
         f = ceil(width / 2.0)
         c = (2 * f - 1 - f % 2) / (2.0 * f)
-        bilinear = np.zeros([f_shape[0], f_shape[1]])
+        bilinear = np.zeros([width, heigh])
         for x in range(width):
             for y in range(heigh):
                 value = (1 - abs(x / f - c)) * (1 - abs(y / f - c))
                 bilinear[x, y] = value
         weights = np.zeros(f_shape)
+        #weights = tf.truncated_normal(f_shape, stddev=1e-1)
         for i in range(f_shape[2]):
+            #for j in range(f_shape[3]):
             weights[:, :, i, i] = bilinear
 
         init = tf.constant_initializer(value=weights, dtype=tf.float32)
+        
+        #init = tf.truncated_normal_initializer(dtype=tf.float32, stddev=1e-1)
         var = tf.get_variable(name="weights", initializer=init, shape=weights.shape)
         return var
 

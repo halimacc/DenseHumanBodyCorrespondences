@@ -22,29 +22,26 @@
       <Filter>源文件</Filter>
     </None>
     <None Include="packages.config" />
+    <None Include="GeometryShader.gs">
+      <Filter>源文件</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="tinyply.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="shader.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="utility.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="test.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="correspond.cpp">
+    <ClCompile Include="generate_label.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="shader.hpp">
+    <ClInclude Include="config.h">
       <Filter>源文件</Filter>
     </ClInclude>
-    <ClInclude Include="config.h">
+    <ClInclude Include="shader.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
+    <ClInclude Include="tinyply.h">
       <Filter>源文件</Filter>
     </ClInclude>
   </ItemGroup>

@@ -12,12 +12,12 @@ import time
 import tensorflow.contrib.slim as slim
 
 project_path = 'D:\\Project\\DHBC\\'
-start_step = 0
+start_step = 2000
 
 # train
 learning_rate = 0.0001
 training_iters = 200000
-batch_size = 2
+batch_size = 1
 
 # log and display
 logs_dir = project_path + 'log\\'
@@ -25,7 +25,7 @@ checkpoints_dir = logs_dir + 'checkpoints\\'
 checkpoint_step = 1000
 
 display_dir = logs_dir + 'display\\'
-display_step = 10
+display_step = 20
 
 random.seed()
 
@@ -40,7 +40,7 @@ for i in range(config.num_dense_color):
     
 def random_batch(batch_size):
     model_idx = 0
-    segment_idx = random.randin(0, 99)
+    segment_idx = 0
     mesh_idx = random.randint(0, config.num_mesh[model_idx] - 1)
 
     view_indices = random.sample([i for i in range(144)], batch_size)
@@ -66,10 +66,10 @@ def random_batch(batch_size):
 
 def display(step, prediction, label):
     prediction, label = prediction[0], label[0]
-    mul = np.multiply(prediction, label)
+    #mul = np.multiply(prediction, label)
     labelimg = np.zeros([512, 512, 3], dtype=np.uint8)
     predimg = np.zeros([512, 512, 3], dtype=np.uint8)
-    heatmap = np.zeros([512, 512, 3], dtype=np.uint8)
+    #heatmap = np.zeros([512, 512, 3], dtype=np.uint8)
     correct = np.zeros([512, 512, 1], dtype=np.uint8)
     for i in range(512):
         for j in range(512):
@@ -82,14 +82,14 @@ def display(step, prediction, label):
                 color = int2color_dense[idx_pred + 1]
                 for c in range(3):
                     predimg[i, j, c] = color[c]
-                color = cm.hot(mul[i, j, idx_pred])
-                for c in range(3):
-                    heatmap[i, j, c] = int(color[c] * 256)
+#                color = cm.hot(mul[i, j, idx_pred])
+#                for c in range(3):
+#                    heatmap[i, j, c] = int(color[c] * 256)
                 correct[i, j, 0] = 255 if idx_label == idx_pred else 0
     display_path = display_dir + str(step).zfill(8)
     cv.imwrite(display_path + '_groundtruth.png', labelimg)
     cv.imwrite(display_path + '_prediction.png', predimg)
-    cv.imwrite(display_path + '_heatmap.png', heatmap)
+    #cv.imwrite(display_path + '_heatmap.png', heatmap)
     cv.imwrite(display_path + '_correctness.png', correct)
     
 def timeit(t=None):
@@ -143,7 +143,7 @@ if __name__ == '__main__':
                 print("Step " + str(step * batch_size) + ", Loss= {:.6f}".format(loss))
                 
                 if step % display_step == 0:
-                    pred = sess.run(tf.nn.softmax(model.preds[0]), feed_dict={x_depth: batch_depth, y_label_dense: batch_label_dense})
+                    pred = sess.run(tf.nn.softmax(model.pred), feed_dict={x_depth: batch_depth, y_label_dense: batch_label_dense})
                     display(step, pred, batch_label_dense)
                     
                 if step % checkpoint_step == 0:
