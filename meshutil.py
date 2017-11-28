@@ -39,7 +39,7 @@ def load_obj_mesh(mesh_path):
             v = list(map(float, values[1:4]))
             vertex_data.append(v)
         elif values[0] == 'f':
-            f = list(map(int, values[1:4]))
+            f = list(map(lambda x: int(x.split('/')[0]),  values[1:4]))
             face_data.append(f)
     vertices = np.array(vertex_data)
     faces = np.array(face_data)
@@ -56,7 +56,7 @@ def load_mesh(mesh_path):
     faces = faces.astype(np.int32)
     return vertices, faces
 
-def regularize_mesh(vertices, model):
+def regularize_mesh_old(vertices, model):
     tmp = np.ones([vertices.shape[0], 4], dtype=np.float32)
     tmp[:,:3] = vertices
 
@@ -74,6 +74,15 @@ def regularize_mesh(vertices, model):
 
     mean = np.mean(vertices, 0)
     vertices -= mean
+
+def regularize_mesh(vertices, flipyz):
+    if flipyz:
+        vertices[:,1], vertices[:,2] = vertices[:,2], vertices[:,1]
+    
+    scale = 1.8 / (np.max(vertices[:,1]) - np.min(vertices[:,1]))
+    transform = -np.mean(vertices, 0)
+    vertices = (vertices + transform) * scale
+    return vertices
 
 def furthest_point_sample(vertices, faces, N, K):
     num_vertices = vertices.shape[0]
