@@ -1,5 +1,7 @@
-Dense Human Body Correspondences
+Dense Human Body Correspondences (Deprecated)
 ==================================
+**2021-10-25: This repo is no longer under maintenance.** My apologies, should have done this a long time ago.
+
 This is a tensorflow implementation for paper [**Dense Human Body Correspondences Using Convolutional Networks**](https://arxiv.org/abs/1511.05904).
 
 **ATTENTION**: This repo is currently semi-finished, in next few weeks, the newest:
